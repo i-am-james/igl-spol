@@ -1,20 +1,13 @@
 function Install-NuGetIfNeeded {
-    # Check if NuGet provider is installed
     $nugetProvider = Get-PackageProvider -Name NuGet -Force
 
     if ($nugetProvider -eq $null) {
-        Write-Host "NuGet provider is not installed. Installing NuGet..." -ForegroundColor Yellow
+        Write-Host "Running Prechecks..." -ForegroundColor Yellow
         
-        # Install NuGet provider automatically
         Try {
-            Install-PackageProvider -Name NuGet -Force -Scope CurrentUser -ErrorAction Stop
-            Write-Host "✓ NuGet provider installed successfully." -ForegroundColor Green
+            Install-PackageProvider -Name NuGet -Force -Scope CurrentUser -Confirm:$false -ErrorAction Stop | Out-Null
         } Catch {
-            Write-Host "✗ Failed to install NuGet provider." -ForegroundColor Red
-            exit 1
         }
-    } else {
-        Write-Host "✓ NuGet provider is already installed." -ForegroundColor Green
     }
 }
 
