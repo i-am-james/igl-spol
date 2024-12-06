@@ -1,3 +1,23 @@
+function Install-NuGetIfNeeded {
+    # Check if NuGet provider is installed
+    $nugetProvider = Get-PackageProvider -Name NuGet -Force
+
+    if ($nugetProvider -eq $null) {
+        Write-Host "NuGet provider is not installed. Installing NuGet..." -ForegroundColor Yellow
+        
+        # Install NuGet provider automatically
+        Try {
+            Install-PackageProvider -Name NuGet -Force -Scope CurrentUser -ErrorAction Stop
+            Write-Host "✓ NuGet provider installed successfully." -ForegroundColor Green
+        } Catch {
+            Write-Host "✗ Failed to install NuGet provider." -ForegroundColor Red
+            exit 1
+        }
+    } else {
+        Write-Host "✓ NuGet provider is already installed." -ForegroundColor Green
+    }
+}
+
 function Silent-CheckAndInstall-PolicyFileEditorModule {
     $moduleName = "PolicyFileEditor"
     $moduleInstalled = Get-Module -ListAvailable -Name $moduleName
@@ -86,6 +106,9 @@ function Apply-SecurityPolicy {
     }
 }
 
+# Ensure NuGet is installed automatically
+Install-NuGetIfNeeded
+
 Silent-CheckAndInstall-PolicyFileEditorModule
 if (-not (Check-InsecureGuestLogonsPolicy)) {
     Enable-InsecureGuestLogonsPolicy
@@ -95,3 +118,7 @@ if (-not (Check-InsecureGuestLogonsPolicy)) {
 Apply-SecurityPolicy | Out-Null
 
 Write-Host "All checks are complete." -ForegroundColor Cyan
+
+# Add the prompt after the changes are made
+Write-Host "PioneerRx should now launch. You can close this window." -ForegroundColor Cyan
+Pause
