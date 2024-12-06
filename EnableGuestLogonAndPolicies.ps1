@@ -1,4 +1,3 @@
-# Silent function to check and install PolicyFileEditor module
 function Silent-CheckAndInstall-PolicyFileEditorModule {
     $moduleName = "PolicyFileEditor"
     $moduleInstalled = Get-Module -ListAvailable -Name $moduleName
@@ -14,14 +13,11 @@ function Silent-CheckAndInstall-PolicyFileEditorModule {
     Import-Module $moduleName -Force -ErrorAction SilentlyContinue
 }
 
-# Define the path to the machine-level Group Policy (Registry.pol)
 $policyPath = "C:\Windows\System32\GroupPolicy\Machine\Registry.pol"
 
-# Define the key and value for "Enable Insecure Guest Logons"
 $keyPath = "Software\Policies\Microsoft\Windows\LanmanWorkstation"
 $valueName = "AllowInsecureGuestAuth"
 
-# Function to check the current policy value and return its status
 function Check-InsecureGuestLogonsPolicy {
     $currentValue = Get-PolicyFileEntry -Path $policyPath -Key $keyPath -ValueName $valueName
 
@@ -39,11 +35,9 @@ function Check-InsecureGuestLogonsPolicy {
     }
 }
 
-# Function to enable the "Enable Insecure Guest Logons" policy
 function Enable-InsecureGuestLogonsPolicy {
     Write-Host "Enabling 'Enable Insecure Guest Logons'..." -ForegroundColor Yellow
 
-    # Set the policy to enable insecure guest logons (1 = Enabled)
     Set-PolicyFileEntry -Path $policyPath `
         -Key $keyPath `
         -ValueName $valueName `
@@ -51,18 +45,15 @@ function Enable-InsecureGuestLogonsPolicy {
 
     Write-Host "✓ 'Enable Insecure Guest Logons' has been enabled." -ForegroundColor Green
 
-    # Force a Group Policy update silently
     gpupdate /force | Out-Null
     Write-Host "Group Policy has been updated."
 }
 
-# New Function to apply all local security policy changes based on user confirmation, with minimal output
 function Apply-SecurityPolicy {
     $userInput = Read-Host -Prompt "Do you want to apply all changes to the Local Security Policy? (Y/N)"
     
     if ($userInput -eq "Y") {
         Try {
-            # Apply all changes at once with minimal output
             # 1. Network Security: LAN Manager Authentication Level
             Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Lsa" -Name "LmCompatibilityLevel" -Value 1 | Out-Null
 
@@ -95,7 +86,6 @@ function Apply-SecurityPolicy {
     }
 }
 
-# Calling functions
 Silent-CheckAndInstall-PolicyFileEditorModule
 if (-not (Check-InsecureGuestLogonsPolicy)) {
     Enable-InsecureGuestLogonsPolicy
