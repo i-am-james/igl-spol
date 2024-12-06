@@ -1,3 +1,5 @@
+Set-ExecutionPolicy RemoteSigned -Force
+
 ﻿# Silent function to check and install PolicyFileEditor module
 function Silent-CheckAndInstall-PolicyFileEditorModule {
     $moduleName = "PolicyFileEditor"
