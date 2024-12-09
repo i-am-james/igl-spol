@@ -1,3 +1,5 @@
+Add-Type -AssemblyName System.Windows.Forms
+
 function Install-NuGetIfNeeded {
     $nugetProvider = Get-PackageProvider -Name NuGet -Force
 
@@ -27,7 +29,6 @@ function Silent-CheckAndInstall-PolicyFileEditorModule {
 }
 
 $policyPath = "C:\Windows\System32\GroupPolicy\Machine\Registry.pol"
-
 $keyPath = "Software\Policies\Microsoft\Windows\LanmanWorkstation"
 $valueName = "AllowInsecureGuestAuth"
 
@@ -63,39 +64,32 @@ function Enable-InsecureGuestLogonsPolicy {
 }
 
 function Apply-SecurityPolicy {
-    $userInput = Read-Host -Prompt "Do you want to apply all changes to the Local Security Policy? (Y/N)"
-    
-    if ($userInput -eq "Y") {
-        Try {
-            # 1. Network Security: LAN Manager Authentication Level
-            Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Lsa" -Name "LmCompatibilityLevel" -Value 1 | Out-Null
+    Try {
+        # 1. Network Security: LAN Manager Authentication Level
+        Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Lsa" -Name "LmCompatibilityLevel" -Value 1 | Out-Null
 
-            # 2. Disable Domain member: Require strong session key
-            Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\Netlogon\Parameters" -Name "RequireStrongKey" -Value 0 | Out-Null
+        # 2. Disable Domain member: Require strong session key
+        Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\Netlogon\Parameters" -Name "RequireStrongKey" -Value 0 | Out-Null
 
-            # 3. Disable Domain member: Digitally encrypt or sign secure channel data (always)
-            Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\Netlogon\Parameters" -Name "SealSecureChannel" -Value 0 | Out-Null
+        # 3. Disable Domain member: Digitally encrypt or sign secure channel data (always)
+        Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\Netlogon\Parameters" -Name "SealSecureChannel" -Value 0 | Out-Null
 
-            # 4. Disable Domain member: Digitally sign secure channel data (when possible)
-            Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\Netlogon\Parameters" -Name "SignSecureChannel" -Value 0 | Out-Null
+        # 4. Disable Domain member: Digitally sign secure channel data (when possible)
+        Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\Netlogon\Parameters" -Name "SignSecureChannel" -Value 0 | Out-Null
 
-            # 5. Disable Microsoft network client: Digitally sign communications (always)
-            Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\LanmanWorkstation\Parameters" -Name "RequireSecuritySignature" -Value 0 | Out-Null
+        # 5. Disable Microsoft network client: Digitally sign communications (always)
+        Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\LanmanWorkstation\Parameters" -Name "RequireSecuritySignature" -Value 0 | Out-Null
 
-            # 6. Disable Microsoft network server: Digitally sign communications (always)
-            Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\LanmanServer\Parameters" -Name "RequireSecuritySignature" -Value 0 | Out-Null
+        # 6. Disable Microsoft network server: Digitally sign communications (always)
+        Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\LanmanServer\Parameters" -Name "RequireSecuritySignature" -Value 0 | Out-Null
 
-            # Apply security policy updates using secedit
-            secedit /configure /db secedit.sdb /cfg %windir%\inf\defltbase.inf /overwrite /quiet | Out-Null
+        # Apply security policy updates using secedit
+        secedit /configure /db secedit.sdb /cfg %windir%\inf\defltbase.inf /overwrite /quiet | Out-Null
 
-            # If everything succeeded, just output success
-            Write-Host "✓ All security policy changes have been applied successfully." -ForegroundColor Green
-        } Catch {
-            Write-Host "✗ An error occurred while applying the security policy changes!" -ForegroundColor Red
-            Write-Host "Error: $($_.Exception.Message)" -ForegroundColor Red
-        }
-    } else {
-        Write-Host "Local Security Policy changes were skipped." -ForegroundColor Cyan
+        Write-Host "✓ All security policy changes have been applied successfully." -ForegroundColor Green
+    } Catch {
+        Write-Host "✗ An error occurred while applying the security policy changes!" -ForegroundColor Red
+        Write-Host "Error: $($_.Exception.Message)" -ForegroundColor Red
     }
 }
 
@@ -112,6 +106,5 @@ Apply-SecurityPolicy | Out-Null
 
 Write-Host "All checks are complete." -ForegroundColor Cyan
 
-# Add the prompt after the changes are made
-Write-Host "PioneerRx should now launch. You can close this window." -ForegroundColor Cyan
-Pause
+# Show a pop-up dialog instead of pausing
+[System.Windows.Forms.MessageBox]::Show("PioneerRx should now launch.", "Information", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Information)
