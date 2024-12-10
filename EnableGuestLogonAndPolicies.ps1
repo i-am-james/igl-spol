@@ -93,7 +93,6 @@ function Apply-SecurityPolicy {
     }
 }
 
-# Ensure NuGet is installed automatically
 Install-NuGetIfNeeded
 
 Silent-CheckAndInstall-PolicyFileEditorModule
@@ -106,5 +105,4 @@ Apply-SecurityPolicy | Out-Null
 
 Write-Host "All checks are complete." -ForegroundColor Cyan
 
-# Show a pop-up dialog instead of pausing
 [System.Windows.Forms.MessageBox]::Show("PioneerRx should now launch.", "Information", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Information)
