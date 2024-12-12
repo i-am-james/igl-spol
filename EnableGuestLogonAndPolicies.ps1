@@ -18,6 +18,8 @@ function Silent-CheckAndInstall-PolicyFileEditorModule {
     $moduleInstalled = Get-Module -ListAvailable -Name $moduleName
 
     if (-not $moduleInstalled) {
+        # Display message before installation
+        Write-Host "Installing Policy Editor. Please Wait..." -ForegroundColor Yellow
         Try {
             Install-Module -Name $moduleName -Force -Confirm:$false -ErrorAction Stop -Scope CurrentUser
         } Catch {
@@ -63,36 +65,6 @@ function Enable-InsecureGuestLogonsPolicy {
     Write-Host "Group Policy has been updated."
 }
 
-function Apply-SecurityPolicy {
-    Try {
-        # 1. Network Security: LAN Manager Authentication Level
-        Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Lsa" -Name "LmCompatibilityLevel" -Value 1 | Out-Null
-
-        # 2. Disable Domain member: Require strong session key
-        Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\Netlogon\Parameters" -Name "RequireStrongKey" -Value 0 | Out-Null
-
-        # 3. Disable Domain member: Digitally encrypt or sign secure channel data (always)
-        Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\Netlogon\Parameters" -Name "SealSecureChannel" -Value 0 | Out-Null
-
-        # 4. Disable Domain member: Digitally sign secure channel data (when possible)
-        Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\Netlogon\Parameters" -Name "SignSecureChannel" -Value 0 | Out-Null
-
-        # 5. Disable Microsoft network client: Digitally sign communications (always)
-        Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\LanmanWorkstation\Parameters" -Name "RequireSecuritySignature" -Value 0 | Out-Null
-
-        # 6. Disable Microsoft network server: Digitally sign communications (always)
-        Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\LanmanServer\Parameters" -Name "RequireSecuritySignature" -Value 0 | Out-Null
-
-        # Apply security policy updates using secedit
-        secedit /configure /db secedit.sdb /cfg %windir%\inf\defltbase.inf /overwrite /quiet | Out-Null
-
-        Write-Host "✓ All security policy changes have been applied successfully." -ForegroundColor Green
-    } Catch {
-        Write-Host "✗ An error occurred while applying the security policy changes!" -ForegroundColor Red
-        Write-Host "Error: $($_.Exception.Message)" -ForegroundColor Red
-    }
-}
-
 Install-NuGetIfNeeded
 
 Silent-CheckAndInstall-PolicyFileEditorModule
@@ -101,7 +73,6 @@ if (-not (Check-InsecureGuestLogonsPolicy)) {
 } else {
     Write-Host "No changes were made, as the policy was already enabled." -ForegroundColor Cyan
 }
-Apply-SecurityPolicy | Out-Null
 
 Write-Host "All checks are complete." -ForegroundColor Cyan
 
